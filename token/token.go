@@ -16,8 +16,16 @@ const (
 	INT   = "INT"
 
 	// Operators
-	ASSIGN = "ASSIGN"
-	PLUS   = "PLUS"
+	ASSIGN    = "ASSIGN"
+	PLUS      = "PLUS"
+	MINUS     = "MINUS"
+	BANG      = "BANG"
+	BACKSLASH = "BACKSLASH"
+	ASTERISK  = "ASTERISK"
+	LT        = "LT"
+	GT        = "GT"
+	EQ        = "EQ"
+	NEQ       = "NEQ"
 
 	// Special characters
 	COMMA     = "COMMA"
@@ -29,9 +37,32 @@ const (
 
 	// Keywords
 	FUNCTION = "FUNCTION"
+	RETURN   = "RETURN"
 	LET      = "LET"
+	IF       = "IF"
+	ELSE     = "ELSE"
+	TRUE     = "TRUE"
+	FALSE    = "FALSE"
 )
+
+var keywordToTokenType = map[string]TokenType{
+	"fn":     FUNCTION,
+	"return": RETURN,
+	"let":    LET,
+	"if":     IF,
+	"else":   ELSE,
+	"true":   TRUE,
+	"false":  FALSE,
+}
 
 func NewToken(tt TokenType, l string) Token {
 	return Token{tt, l}
+}
+
+func GetTokenType(kw string) TokenType {
+	if tt, ok := keywordToTokenType[kw]; ok {
+		return tt
+	} else {
+		return IDENT
+	}
 }

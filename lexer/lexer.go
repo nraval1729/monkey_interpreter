@@ -38,22 +38,39 @@ func (l *Lexer) NextToken() token.Token {
 	case ',':
 		currTok = token.NewToken(token.COMMA, ",")
 	case '=':
-		currTok = token.NewToken(token.ASSIGN, "=")
+		nextChar := l.peekNextChar()
+		if nextChar == '=' {
+			currTok = token.NewToken(token.EQ, "==")
+			l.readChar()
+		} else {
+			currTok = token.NewToken(token.ASSIGN, "=")
+		}
 	case '+':
 		currTok = token.NewToken(token.PLUS, "+")
+	case '-':
+		currTok = token.NewToken(token.MINUS, "-")
+	case '*':
+		currTok = token.NewToken(token.ASTERISK, "*")
+	case '/':
+		currTok = token.NewToken(token.BACKSLASH, "/")
+	case '!':
+		nextChar := l.peekNextChar()
+		if nextChar == '=' {
+			currTok = token.NewToken(token.NEQ, "!=")
+			l.readChar()
+		} else {
+			currTok = token.NewToken(token.BANG, "!")
+		}
+	case '>':
+		currTok = token.NewToken(token.GT, ">")
+	case '<':
+		currTok = token.NewToken(token.LT, "<")
 	case 0:
 		currTok = token.NewToken(token.EOF, "")
 	default:
 		if isLetter(l.ch) {
 			literal := l.readIdentifier()
-			switch literal {
-			case "let":
-				currTok = token.NewToken(token.LET, literal)
-			case "fn":
-				currTok = token.NewToken(token.FUNCTION, literal)
-			default:
-				currTok = token.NewToken(token.IDENT, literal)
-			}
+			currTok = token.NewToken(token.GetTokenType(literal), literal)
 		} else if isInt(l.ch) {
 			currTok = token.NewToken(token.INT, l.readInt())
 		} else {
@@ -74,6 +91,13 @@ func (l *Lexer) readChar() {
 	}
 	l.currIdx = l.nextIdx
 	l.nextIdx++
+}
+
+func (l *Lexer) peekNextChar() byte {
+	if l.nextIdx < len(l.input) {
+		return l.input[l.nextIdx]
+	}
+	return 0
 }
 
 func (l *Lexer) readIdentifier() string {
