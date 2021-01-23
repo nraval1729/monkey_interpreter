@@ -40,6 +40,30 @@ func (ls *LetStatement) TokenLiteral() string {
 func (ls *LetStatement) expressionNode() {}
 func (ls *LetStatement) statementNode() {}
 
+type ReturnStatement struct {
+	Token      token.Token
+	ReturnValue *Expression
+}
+
+func (rs *ReturnStatement) TokenLiteral() string {
+	return rs.Token.Literal
+}
+
+func (rs *ReturnStatement) expressionNode() {}
+func (rs *ReturnStatement) statementNode() {}
+
+type ExpressionStatement struct {
+	Token      token.Token
+	Expression *Expression
+}
+
+func (es *ExpressionStatement) TokenLiteral() string {
+	return es.Token.Literal
+}
+
+func (es *ExpressionStatement) expressionNode() {}
+func (es *ExpressionStatement) statementNode() {}
+
 type Identifier struct {
 	Token token.Token
 	Value string

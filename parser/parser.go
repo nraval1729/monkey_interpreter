@@ -50,8 +50,9 @@ func (p *Parser) parseStatement() ast.Statement {
 	switch p.currToken.Literal {
 	case "let":
 		return p.parseLetStatement()
+	case "return":
+		return p.parseReturnStatement()
 	default:
-		//panic(fmt.Errorf("invalid statement type %s\n", p.currToken.Literal))
 		return nil
 	}
 }
@@ -74,6 +75,15 @@ func (p *Parser) parseLetStatement() *ast.LetStatement {
 		p.nextToken()
 	}
 	return ls
+}
+
+func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
+	rs := &ast.ReturnStatement{Token: p.currToken}
+
+	for !p.currTokenIsOfType(token.SEMICOLON) {
+		p.nextToken()
+	}
+	return rs
 }
 
 func (p *Parser) eat(tt token.TokenType) bool {
