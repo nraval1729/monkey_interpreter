@@ -11,10 +11,11 @@ type Parser struct {
 	lexer     *lexer.Lexer
 	currToken token.Token
 	peekToken token.Token
+	errors    []string
 }
 
 func New(l *lexer.Lexer) *Parser {
-	p := &Parser{lexer: l}
+	p := &Parser{lexer: l, errors: []string{}}
 	p.nextToken()
 	p.nextToken()
 
@@ -41,12 +42,17 @@ func (p *Parser) ParseProgram() *ast.Program {
 	return program
 }
 
+func (p *Parser) Errors() []string {
+	return p.errors
+}
+
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.currToken.Literal {
 	case "let":
 		return p.parseLetStatement()
 	default:
-		panic(fmt.Errorf("invalid statement type %s\n", p.currToken.Literal))
+		//panic(fmt.Errorf("invalid statement type %s\n", p.currToken.Literal))
+		return nil
 	}
 }
 
@@ -74,8 +80,14 @@ func (p *Parser) eat(tt token.TokenType) bool {
 	if p.peekToken.Type == tt {
 		p.nextToken()
 		return true
+	} else {
+		p.eatError(tt)
+		return false
 	}
-	return false
+}
+
+func (p *Parser) eatError(tt token.TokenType) {
+	p.errors = append(p.errors, fmt.Sprintf("expected next token of type %s but got %s instead\n", tt, p.peekToken.Type))
 }
 
 func (p *Parser) currTokenIsOfType(tt token.TokenType) bool {
