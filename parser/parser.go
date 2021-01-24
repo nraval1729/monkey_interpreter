@@ -5,6 +5,7 @@ import (
 	"../lexer"
 	"../token"
 	"fmt"
+	"strconv"
 )
 
 const (
@@ -39,6 +40,7 @@ func New(l *lexer.Lexer) *Parser {
 
 	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
 	p.registerPrefixParseFn(token.IDENT, p.parseIdentifier)
+	p.registerPrefixParseFn(token.INT, p.parseIntegerLiteral)
 	return p
 }
 
@@ -130,6 +132,15 @@ func (p *Parser) parseExpression(precedence int) ast.Expression {
 
 func (p *Parser) parseIdentifier() ast.Expression {
 	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+}
+
+func (p *Parser) parseIntegerLiteral() ast.Expression {
+	intLiteral, err := strconv.Atoi(p.currToken.Literal)
+	if err != nil {
+		p.errors = append(p.errors, fmt.Sprintf("error converting intLiteral from string to int %v\n", err))
+		return nil
+	}
+	return &ast.IntegerLiteral{Token: p.currToken, Value: intLiteral}
 }
 
 func (p *Parser) eat(tt token.TokenType) bool {

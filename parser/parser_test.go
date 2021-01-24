@@ -126,7 +126,40 @@ func TestIdentifierExpression(t *testing.T) {
 	if ident.TokenLiteral() != "foobar" {
 		t.Fatalf("ident.TokenLiteral() is not foobar. Got = %s\n", ident.TokenLiteral())
 	}
+}
 
+func TestIntegerLiteral(t *testing.T) {
+	input := `5;`
+
+	parser := New(lexer.New(input))
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if program == nil {
+		t.Fatalf("parser.ParseProgram() returned nil\n")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements doesn't contain 1 statement. Got = %d\n", len(program.Statements))
+	}
+
+	expStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt %v is not an ast.ExpressionStatement\n", program.Statements[0])
+	}
+
+	intLiteral, ok := expStmt.Expression.(*ast.IntegerLiteral)
+	if !ok {
+		t.Fatalf("expStmt.Expression is not of type IntegerLiteral. Got %T\n", expStmt.Expression)
+	}
+
+	if intLiteral.Value != 5 {
+		t.Fatalf("intLiteral is not of value 5. Got = %d\n", intLiteral.Value)
+	}
+
+	if intLiteral.TokenLiteral() != "5" {
+		t.Fatalf("intLiteral.TokenLiteral() is not 5. Got = %s\n", intLiteral.TokenLiteral())
+	}
 }
 
 // helper functions
