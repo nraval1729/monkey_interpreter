@@ -3,6 +3,7 @@ package parser
 import (
 	"../ast"
 	"../lexer"
+	"../token"
 	"testing"
 )
 
@@ -68,6 +69,28 @@ return 17290022;
 		if !testReturnStatement(t, program.Statements[i], test.expectedIdentifier) {
 			return
 		}
+	}
+}
+
+func TestString(t *testing.T) {
+	program := &ast.Program{
+		Statements: []ast.Statement{
+			&ast.LetStatement{
+				Token: token.NewToken(token.LET, "let"),
+				Identifier: &ast.Identifier{
+					Token: token.NewToken(token.IDENT, "ident"),
+					Value: "foo",
+				},
+				Value: &ast.Identifier{
+					Token: token.NewToken(token.IDENT, "ident"),
+					Value: "bar",
+				},
+			},
+		},
+	}
+
+	if program.String() != "let foo = bar;" {
+		t.Errorf("program.String() wrong. Expected let foo = bar; but got %s\n", program.String())
 	}
 }
 
