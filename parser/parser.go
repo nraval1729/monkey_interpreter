@@ -7,11 +7,29 @@ import (
 	"fmt"
 )
 
+const (
+	_ int = iota
+	LOWEST
+	EQUALS
+	LESSGREATER
+	SUM
+	PRODUCT
+	PREFIX
+	CALL
+)
+
+type (
+	prefixParseFn func() ast.Expression
+	infixParseFn  func(expression ast.Expression) ast.Expression
+)
+
 type Parser struct {
-	lexer     *lexer.Lexer
-	currToken token.Token
-	peekToken token.Token
-	errors    []string
+	lexer          *lexer.Lexer
+	currToken      token.Token
+	peekToken      token.Token
+	errors         []string
+	prefixParseFns map[token.TokenType]prefixParseFn
+	infixParseFns  map[token.TokenType]infixParseFn
 }
 
 func New(l *lexer.Lexer) *Parser {
@@ -19,12 +37,9 @@ func New(l *lexer.Lexer) *Parser {
 	p.nextToken()
 	p.nextToken()
 
+	p.prefixParseFns = make(map[token.TokenType]prefixParseFn)
+	p.registerPrefixParseFn(token.IDENT, p.parseIdentifier)
 	return p
-}
-
-func (p *Parser) nextToken() {
-	p.currToken = p.peekToken
-	p.peekToken = p.lexer.NextToken()
 }
 
 func (p *Parser) ParseProgram() *ast.Program {
@@ -46,6 +61,11 @@ func (p *Parser) Errors() []string {
 	return p.errors
 }
 
+func (p *Parser) nextToken() {
+	p.currToken = p.peekToken
+	p.peekToken = p.lexer.NextToken()
+}
+
 func (p *Parser) parseStatement() ast.Statement {
 	switch p.currToken.Literal {
 	case "let":
@@ -53,7 +73,7 @@ func (p *Parser) parseStatement() ast.Statement {
 	case "return":
 		return p.parseReturnStatement()
 	default:
-		return nil
+		return p.parseExpressionStatement()
 	}
 }
 
@@ -86,6 +106,32 @@ func (p *Parser) parseReturnStatement() *ast.ReturnStatement {
 	return rs
 }
 
+func (p *Parser) parseExpressionStatement() *ast.ExpressionStatement {
+	es := &ast.ExpressionStatement{Token: p.currToken}
+
+	es.Expression = p.parseExpression(LOWEST)
+
+	if !p.eat(token.SEMICOLON) {
+		return nil
+	}
+
+	return es
+}
+
+func (p *Parser) parseExpression(precedence int) ast.Expression {
+	prefixFn := p.prefixParseFns[p.currToken.Type]
+	if prefixFn == nil {
+		return nil
+	}
+	leftExp := prefixFn()
+
+	return leftExp
+}
+
+func (p *Parser) parseIdentifier() ast.Expression {
+	return &ast.Identifier{Token: p.currToken, Value: p.currToken.Literal}
+}
+
 func (p *Parser) eat(tt token.TokenType) bool {
 	if p.peekToken.Type == tt {
 		p.nextToken()
@@ -102,4 +148,12 @@ func (p *Parser) eatError(tt token.TokenType) {
 
 func (p *Parser) currTokenIsOfType(tt token.TokenType) bool {
 	return p.currToken.Type == tt
+}
+
+func (p *Parser) registerPrefixParseFn(tt token.TokenType, fn prefixParseFn) {
+	p.prefixParseFns[tt] = fn
+}
+
+func (p *Parser) registerInfixParseFn(tt token.TokenType, fn infixParseFn) {
+	p.infixParseFns[tt] = fn
 }

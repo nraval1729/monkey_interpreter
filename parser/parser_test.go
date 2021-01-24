@@ -94,12 +94,43 @@ func TestString(t *testing.T) {
 	}
 }
 
-/*
-	1. Test that stmt.TokenLiteral() == "let"
-	2. Test that stmt is of type LetStatement
-	3. Test that stmt.Identifier.TokenLiteral() == "let"
-	4. Test that stmt.Identifier.Value == expectedIdentifierValue
-*/
+func TestIdentifierExpression(t *testing.T) {
+	input := `foobar;`
+
+	parser := New(lexer.New(input))
+	program := parser.ParseProgram()
+	checkParserErrors(t, parser)
+
+	if program == nil {
+		t.Fatalf("parser.ParseProgram() returned nil\n")
+	}
+
+	if len(program.Statements) != 1 {
+		t.Fatalf("program.Statements doesn't contain 1 statement. Got = %d\n", len(program.Statements))
+	}
+
+	expStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+	if !ok {
+		t.Fatalf("stmt %v is not an ast.ExpressionStatement\n", program.Statements[0])
+	}
+
+	ident, ok := expStmt.Expression.(*ast.Identifier)
+	if !ok {
+		t.Fatalf("expStmt.Expression is not of type identifier. Got %T\n", expStmt.Expression)
+	}
+
+	if ident.Value != "foobar" {
+		t.Fatalf("ident is not of value foobar. Got = %s\n", ident.Value)
+	}
+
+	if ident.TokenLiteral() != "foobar" {
+		t.Fatalf("ident.TokenLiteral() is not foobar. Got = %s\n", ident.TokenLiteral())
+	}
+
+}
+
+// helper functions
+
 func testLetStatement(t *testing.T, stmt ast.Statement, expectedIdentifierValue string) bool {
 	if stmt.TokenLiteral() != "let" {
 		t.Errorf("stmt.TokenLiteral() is not let for stmt: %v\n", stmt)
