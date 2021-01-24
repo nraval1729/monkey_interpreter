@@ -94,7 +94,7 @@ func TestString(t *testing.T) {
 	}
 }
 
-func TestIdentifierExpression(t *testing.T) {
+func TestParseIdentifierExpression(t *testing.T) {
 	input := `foobar;`
 
 	parser := New(lexer.New(input))
@@ -128,7 +128,7 @@ func TestIdentifierExpression(t *testing.T) {
 	}
 }
 
-func TestIntegerLiteral(t *testing.T) {
+func TestParseIntegerLiteral(t *testing.T) {
 	input := `5;`
 
 	parser := New(lexer.New(input))
@@ -162,7 +162,70 @@ func TestIntegerLiteral(t *testing.T) {
 	}
 }
 
+func TestParsePrefixExpressions(t *testing.T) {
+	tt := []struct {
+		input        string
+		operator     string
+		integerValue int
+	}{
+		{input: "!5;", operator: "!", integerValue: 5},
+		{input: "-15;", operator: "-", integerValue: 15},
+	}
+
+	for _, tc := range tt {
+		parser := New(lexer.New(tc.input))
+		program := parser.ParseProgram()
+		checkParserErrors(t, parser)
+
+		if program == nil {
+			t.Fatalf("parser.ParseProgram() returned nil\n")
+		}
+
+		if len(program.Statements) != 1 {
+			t.Fatalf("program.Statements doesn't contain 1 statement. Got = %d\n", len(program.Statements))
+		}
+
+		prefixStmt, ok := program.Statements[0].(*ast.ExpressionStatement)
+		if !ok {
+			t.Fatalf("stmt %v is not an ast.ExpressionStatement\n", program.Statements[0])
+		}
+
+		exp, ok := prefixStmt.Expression.(*ast.PrefixExpression)
+		if !ok {
+			t.Fatalf("prefixStmt.Expression is not of type ast.PrefixExpression. Got %T\n", prefixStmt.Expression)
+		}
+
+		if exp.Operator != tc.operator {
+			t.Fatalf("Expected exp.Operator to be %s. Got %s\n", exp.Operator, tc.operator)
+		}
+
+		if !testIntegerLiteral(t, exp.Right, tc.integerValue) {
+			return
+		}
+	}
+}
+
 // helper functions
+
+func testIntegerLiteral(t *testing.T, il ast.Expression, value int) bool {
+	integer, ok := il.(*ast.IntegerLiteral)
+	if !ok {
+		t.Errorf("Expected ast.Expression to be an ast.IntegerLiteral. Got = %T\n", il)
+		return false
+	}
+
+	if integer.Value != value {
+		t.Errorf("Expected integer.value to be %d. Got = %d\n", integer.Value, value)
+		return false
+	}
+
+	if integer.Token.Type != token.INT {
+		t.Errorf("Expected integer.Token.Literal to be %s. Got = %s\n", token.INT, integer.Token.Literal)
+		return false
+	}
+
+	return true
+}
 
 func testLetStatement(t *testing.T, stmt ast.Statement, expectedIdentifierValue string) bool {
 	if stmt.TokenLiteral() != "let" {
